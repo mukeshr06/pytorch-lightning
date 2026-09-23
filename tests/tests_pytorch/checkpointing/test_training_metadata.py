@@ -25,7 +25,9 @@ from lightning.pytorch.utilities.combined_loader import CombinedLoader
 
 @pytest.mark.parametrize("weights_only", [False, True])
 def test_training_metadata_before_dataloader_setup(tmp_path, weights_only):
-    trainer = Trainer(default_root_dir=tmp_path, logger=False, enable_checkpointing=False)
+    trainer = Trainer(
+        accelerator="cpu", devices=1, default_root_dir=tmp_path, logger=False, enable_checkpointing=False
+    )
     trainer.strategy.connect(BoringModel())
     path = tmp_path / "model.ckpt"
     trainer.save_checkpoint(path, weights_only=weights_only)
@@ -42,7 +44,9 @@ def test_training_metadata_before_dataloader_setup(tmp_path, weights_only):
 
 
 def test_training_metadata_multiple_loaders(tmp_path):
-    trainer = Trainer(default_root_dir=tmp_path, logger=False, enable_checkpointing=False)
+    trainer = Trainer(
+        accelerator="cpu", devices=1, default_root_dir=tmp_path, logger=False, enable_checkpointing=False
+    )
     trainer.strategy.connect(BoringModel())
     # Include nested loaders and a custom iterable with no worker count. Do not start any workers.
     trainer.fit_loop._combined_loader = CombinedLoader({
@@ -72,6 +76,8 @@ def test_training_metadata_on_exception(tmp_path, callback_type):
     kwargs = {"save_on_exception": True} if callback_type is ModelCheckpoint else {}
     callback = callback_type(dirpath=tmp_path, filename="exception", **kwargs)
     trainer = Trainer(
+        accelerator="cpu",
+        devices=1,
         default_root_dir=tmp_path,
         callbacks=[callback, RaiseAfterBatch()],
         logger=False,
@@ -94,7 +100,13 @@ def test_training_metadata_on_exception(tmp_path, callback_type):
 @pytest.mark.parametrize("legacy", [False, True])
 def test_training_metadata_resume(tmp_path, legacy):
     trainer = Trainer(
-        default_root_dir=tmp_path, logger=False, enable_checkpointing=False, max_steps=1, limit_val_batches=0
+        accelerator="cpu",
+        devices=1,
+        default_root_dir=tmp_path,
+        logger=False,
+        enable_checkpointing=False,
+        max_steps=1,
+        limit_val_batches=0,
     )
     trainer.fit(BoringModel())
     path = tmp_path / "resume.ckpt"
@@ -107,7 +119,13 @@ def test_training_metadata_resume(tmp_path, legacy):
         checkpoint["training_metadata"]["world_size"] = 8
     torch.save(checkpoint, path)
     trainer = Trainer(
-        default_root_dir=tmp_path, logger=False, enable_checkpointing=False, max_steps=2, limit_val_batches=0
+        accelerator="cpu",
+        devices=1,
+        default_root_dir=tmp_path,
+        logger=False,
+        enable_checkpointing=False,
+        max_steps=2,
+        limit_val_batches=0,
     )
     trainer.fit(BoringModel(), ckpt_path=path)
     assert trainer.global_step == 2
