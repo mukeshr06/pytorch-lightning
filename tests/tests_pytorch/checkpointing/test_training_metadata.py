@@ -25,9 +25,7 @@ from lightning.pytorch.utilities.combined_loader import CombinedLoader
 
 @pytest.mark.parametrize("weights_only", [False, True])
 def test_training_metadata_before_dataloader_setup(tmp_path, weights_only):
-    trainer = Trainer(
-        accelerator="cpu", devices=1, default_root_dir=tmp_path, logger=False, enable_checkpointing=False
-    )
+    trainer = Trainer(accelerator="cpu", devices=1, default_root_dir=tmp_path, logger=False, enable_checkpointing=False)
     trainer.strategy.connect(BoringModel())
     path = tmp_path / "model.ckpt"
     trainer.save_checkpoint(path, weights_only=weights_only)
@@ -44,9 +42,7 @@ def test_training_metadata_before_dataloader_setup(tmp_path, weights_only):
 
 
 def test_training_metadata_multiple_loaders(tmp_path):
-    trainer = Trainer(
-        accelerator="cpu", devices=1, default_root_dir=tmp_path, logger=False, enable_checkpointing=False
-    )
+    trainer = Trainer(accelerator="cpu", devices=1, default_root_dir=tmp_path, logger=False, enable_checkpointing=False)
     trainer.strategy.connect(BoringModel())
     # Include nested loaders and a custom iterable with no worker count. Do not start any workers.
     trainer.fit_loop._combined_loader = CombinedLoader({
